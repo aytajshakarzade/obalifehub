@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../components/Button';
 import { useAuth } from '../contexts/AuthContext';
-import { ShoppingBag } from 'lucide-react';
 
 interface AuthProps {
   onSuccess: () => void;
@@ -29,7 +28,6 @@ export function Auth({ onSuccess }: AuthProps) {
       } else {
         await signUp(email, password, fullName, role);
       }
-
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xəta baş verdi');
@@ -39,17 +37,21 @@ export function Auth({ onSuccess }: AuthProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-yellow-50 flex flex-col">
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
 
-        {/* Logo */}
-        <div className="w-20 h-20 bg-[#2E8C3B] rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
-          <ShoppingBag className="w-10 h-10 text-white" />
+        {/* LOGO */}
+        <div className="mb-6 flex justify-center">
+          <img
+            src="https://www.veyseloglu.az/storage/companies/PUttOiNBLhM0uhKe84OCAEW1yAIXzSztboG1Ve2v.png"
+            alt="OBA LifeHub Logo"
+            className="w-36 h-36 object-contain drop-shadow-2xl"
+          />
         </div>
 
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2 text-center">
           {isLogin ? 'Welcome Back' : 'Join OBA LifeHub'}
         </h1>
 
@@ -71,7 +73,6 @@ export function Auth({ onSuccess }: AuthProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name
                   </label>
-
                   <input
                     type="text"
                     value={fullName}
@@ -86,7 +87,6 @@ export function Auth({ onSuccess }: AuthProps) {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     I am a
                   </label>
-
                   <select
                     value={role}
                     onChange={(e) =>
@@ -107,7 +107,6 @@ export function Auth({ onSuccess }: AuthProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
-
               <input
                 type="email"
                 value={email}
@@ -122,7 +121,6 @@ export function Auth({ onSuccess }: AuthProps) {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
-
               <input
                 type="password"
                 value={password}
