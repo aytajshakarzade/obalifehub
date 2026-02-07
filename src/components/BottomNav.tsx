@@ -1,6 +1,6 @@
-import { Home, ShoppingCart, CreditCard, Sparkles, User } from 'lucide-react';
+import { Home, ShoppingBag, Search, MapPin, User } from 'lucide-react';
 
-type Tab = 'home' | 'shopping' | 'card' | 'ai' | 'profile';
+type Tab = 'home' | 'market' | 'search' | 'locations' | 'profile';
 
 interface Props {
   active: Tab;
@@ -14,14 +14,29 @@ export function BottomNav({ active, onChange }: Props) {
       {/* mobile width wrapper */}
       <div className="mx-auto max-w-[430px]">
 
-        <div className="bg-white dark:bg-gray-900 border-t shadow-xl flex justify-around py-3 rounded-t-2xl">
-
+        <div className="bg-white dark:bg-gray-900 border-t shadow-xl flex justify-around py-2 rounded-t-2xl relative">
           <NavItem icon={Home} label="Home" active={active === 'home'} onClick={() => onChange('home')} />
-          <NavItem icon={ShoppingCart} label="Shop" active={active === 'shopping'} onClick={() => onChange('shopping')} />
-          <NavItem icon={CreditCard} label="Card" active={active === 'card'} onClick={() => onChange('card')} />
-          <NavItem icon={Sparkles} label="AI" active={active === 'ai'} onClick={() => onChange('ai')} />
-          <NavItem icon={User} label="Profile" active={active === 'profile'} onClick={() => onChange('profile')} />
+          <NavItem
+            icon={ShoppingBag}
+            label="Market"
+            active={active === 'market'}
+            onClick={() => onChange('market')}
+          />
 
+          <button
+            onClick={() => onChange('search')}
+            className="relative -mt-8 w-14 h-14 rounded-full bg-[#FFB703] shadow-lg flex items-center justify-center text-white border-4 border-white"
+          >
+            <Search className="w-6 h-6" />
+          </button>
+
+          <NavItem
+            icon={MapPin}
+            label="Locations"
+            active={active === 'locations'}
+            onClick={() => onChange('locations')}
+          />
+          <NavItem icon={User} label="Profile" active={active === 'profile'} onClick={() => onChange('profile')} />
         </div>
 
       </div>

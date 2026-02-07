@@ -15,6 +15,7 @@ export function Auth({ onSuccess }: AuthProps) {
   const [role, setRole] = useState<'parent' | 'child' | 'senior'>('parent');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [pendingSuccess, setPendingSuccess] = useState(false);
 
   const { signIn, signUp } = useAuth();
 
@@ -30,7 +31,7 @@ export function Auth({ onSuccess }: AuthProps) {
         await signUp(email, password, fullName, role);
       }
 
-      onSuccess();
+      setPendingSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xəta baş verdi');
     } finally {
@@ -175,8 +176,25 @@ export function Auth({ onSuccess }: AuthProps) {
       </div>
 
       {/* Bottom Brand */}
-      <div className="bg-[#2E8C3B] text-white text-center py-3 font-bold text-xl tracking-wider">
-        OBA
+      <div className="bg-[#2E8C3B] py-4">
+        <div className="max-w-md mx-auto px-6 flex items-center">
+          <div
+            onAnimationEnd={() => {
+              if (pendingSuccess) {
+                setPendingSuccess(false);
+                onSuccess();
+              }
+            }}
+            className={`px-4 py-2 bg-white rounded-full font-bold text-xl tracking-wider text-[#2E8C3B] ${
+              pendingSuccess ? 'animate-oba-slide' : ''
+            }`}
+          >
+            OBA
+          </div>
+          <span className="ml-3 text-white/80 text-sm">
+            Smart Shopping &amp; Family Platform
+          </span>
+        </div>
       </div>
 
     </div>
