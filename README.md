@@ -20,3 +20,7 @@ The expected Pages URL format is:
 ```
 https://<your-username>.github.io/obalifehub/
 ```
+
+## Vercel deployment
+
+Vercel requires a SPA rewrite so the app loads correctly on refresh. This repo includes a `vercel.json` rewrite for that.
