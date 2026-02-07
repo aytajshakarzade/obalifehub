@@ -4,7 +4,7 @@ import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { User, CreditCard, Clock, Lock } from 'lucide-react';
+import { User, Clock, Lock, MapPin, Gift } from 'lucide-react';
 
 interface ProfileProps {
   onBack: () => void;
@@ -13,13 +13,13 @@ interface ProfileProps {
 export function Profile({ onBack }: ProfileProps) {
   const { t } = useLanguage();
   const { profile } = useAuth();
-  const [activeTab, setActiveTab] = useState<'personal' | 'payment' | 'history' | 'security'>('personal');
+  const [activeTab, setActiveTab] = useState<'account' | 'loyalty' | 'orders' | 'security'>('account');
 
   const tabs = [
-    { id: 'personal', label: t('profile.personalInfo'), icon: User },
-    { id: 'payment', label: t('profile.paymentCards'), icon: CreditCard },
-    { id: 'history', label: t('profile.history'), icon: Clock },
-    { id: 'security', label: t('profile.security'), icon: Lock },
+    { id: 'account', label: 'Account', icon: User },
+    { id: 'loyalty', label: 'Loyalty', icon: Gift },
+    { id: 'orders', label: 'Orders', icon: Clock },
+    { id: 'security', label: 'Privacy', icon: Lock },
   ];
 
   return (
@@ -65,7 +65,7 @@ export function Profile({ onBack }: ProfileProps) {
           })}
         </div>
 
-        {activeTab === 'personal' && (
+        {activeTab === 'account' && (
           <div className="space-y-3 mb-6">
             <Card>
               <p className="text-xs text-gray-500 mb-1">{t('profile.name')}</p>
@@ -80,46 +80,69 @@ export function Profile({ onBack }: ProfileProps) {
               <p className="font-semibold text-gray-800 dark:text-white capitalize">{profile?.role}</p>
             </Card>
             <Card>
-              <p className="text-xs text-gray-500 mb-1">Language</p>
-              <p className="font-semibold text-gray-800 dark:text-white">{profile?.preferred_language || 'English'}</p>
+              <p className="text-xs text-gray-500 mb-2">Saved addresses</p>
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center justify-between">
+                  <span>28 May Street, Baku</span>
+                  <MapPin className="w-4 h-4 text-[#2E8C3B]" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Family Home, Khatai</span>
+                  <MapPin className="w-4 h-4 text-[#2E8C3B]" />
+                </div>
+              </div>
+            </Card>
+            <Card>
+              <p className="text-xs text-gray-500 mb-2">Payment methods</p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <span className="text-sm font-medium">Apple Pay</span>
+                  <span className="text-xs text-green-600">Connected</span>
+                </div>
+                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                  <span className="text-sm font-medium">OBA Wallet</span>
+                  <span className="text-xs text-green-600">Active</span>
+                </div>
+              </div>
             </Card>
             <Button variant="secondary" className="w-full">
-              {t('profile.editProfile')}
+              Manage Account
             </Button>
           </div>
         )}
 
-        {activeTab === 'payment' && (
+        {activeTab === 'loyalty' && (
           <div className="space-y-3 mb-6">
-            <Card className="border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <Card className="border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50">
               <div className="flex items-center justify-between mb-4">
-                <p className="font-semibold text-gray-800 dark:text-white">OBA Virtual Card</p>
-                <span className="text-2xl">💳</span>
+                <p className="font-semibold text-gray-800">Digital Bonus Card</p>
+                <span className="text-2xl">⭐</span>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              <p className="text-sm text-gray-600 mb-3">
                 Card Number: ****-****-****-{profile?.id?.slice(-4).toUpperCase()}
               </p>
               <Button variant="secondary" className="w-full">
-                View Full Card
+                View Bonus Card
               </Button>
             </Card>
 
             <Card>
-              <p className="text-xs text-gray-500 mb-2">Payment Methods</p>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                  <span className="text-sm font-medium">Virtual Card</span>
-                  <span className="text-xs text-green-600">Connected</span>
-                </div>
+              <p className="text-xs text-gray-500 mb-2">Points system</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Total points</span>
+                <span className="text-lg font-semibold text-[#2E8C3B]">{profile?.coins_balance || 1200}</span>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Special offers unlock at 1500 points.
+              </p>
             </Card>
           </div>
         )}
 
-        {activeTab === 'history' && (
+        {activeTab === 'orders' && (
           <div className="space-y-3 mb-6">
             <Card>
-              <p className="text-center text-gray-500 py-6">No transaction history yet</p>
+              <p className="text-center text-gray-500 py-6">No order history yet</p>
             </Card>
             <p className="text-xs text-gray-500 text-center">
               Your purchase and activity history will appear here
@@ -133,12 +156,12 @@ export function Profile({ onBack }: ProfileProps) {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-white mb-1">Password Security</p>
+                  <p className="font-semibold text-gray-800 dark:text-white mb-1">Privacy &amp; Security</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Last changed 90 days ago
+                    Manage password, biometric login, and privacy controls.
                   </p>
                   <Button variant="secondary" className="w-full">
-                    Change Password
+                    Update Privacy Settings
                   </Button>
                 </div>
               </div>
@@ -148,12 +171,12 @@ export function Profile({ onBack }: ProfileProps) {
               <div className="flex items-start gap-3">
                 <Lock className="w-5 h-5 text-blue-500 flex-shrink-0 mt-1" />
                 <div>
-                  <p className="font-semibold text-gray-800 dark:text-white mb-1">Two-Factor Authentication</p>
+                  <p className="font-semibold text-gray-800 dark:text-white mb-1">Preferences</p>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Add an extra layer of security
+                    Notifications, accessibility, and dark mode options.
                   </p>
                   <Button variant="secondary" className="w-full">
-                    Enable 2FA
+                    Manage Preferences
                   </Button>
                 </div>
               </div>
