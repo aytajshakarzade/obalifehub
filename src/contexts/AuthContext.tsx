@@ -1,3 +1,4 @@
+// src/contexts/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
@@ -24,6 +25,7 @@ interface AuthContextType {
     role: 'parent' | 'child' | 'senior'
   ) => Promise<void>;
   signOut: () => Promise<void>;
+  reloadProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,73 +35,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<SmartProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /* ================= INIT ================= */
+  /* ================= SMART ROLE MAPPING ================= */
+  function enhanceProfile(profileRow: Profile): SmartProfile {
+    const role = profileRow.role?.toLowerCase();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
-
-      if (data.session?.user) {
-        loadProfile(data.session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data } = supabase.auth.onAuthStateChange((_e, session) => {
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
-        setProfile(null);
-        setLoading(false);
-      }
-    });
-
-    return () => data.subscription.unsubscribe();
-  }, []);
-
-  /* ================= SMART ROLE ================= */
-
-  function enhanceProfile(profile: Profile): SmartProfile {
-    const role = profile.role?.toLowerCase();
-
-    // SENIOR
-    if (role === 'senior') {
+    // CHILD
+    if (role === 'child') {
       return {
-        ...profile,
-        kidsEnabled: true,
-        grandpaEnabled: true,
-        premiumAccess: true,
-        childSafe: false,
+        ...profileRow,
+        kidsEnabled: false,       // uşaq özü Kids Zone-a girişə sahib deyil
+        grandpaEnabled: false,
+        premiumAccess: false,
+        childSafe: true,         // marketdə yalnız child-safe məhsullar
       };
     }
 
     // PARENT
     if (role === 'parent') {
       return {
-        ...profile,
-        kidsEnabled: true,
-        grandpaEnabled: true,
+        ...profileRow,
+        kidsEnabled: true,       // valideyn Kids Zone görür / idarə edir
+        grandpaEnabled: false,
         premiumAccess: false,
         childSafe: false,
       };
     }
 
-    // CHILD (default)
+    // SENIOR
+    if (role === 'senior') {
+      return {
+        ...profileRow,
+        kidsEnabled: false,
+        grandpaEnabled: true,    // yaşlılarda Grandpa Mode aktivdir
+        premiumAccess: false,
+        childSafe: false,
+      };
+    }
+
+    // fallback
     return {
-      ...profile,
-      kidsEnabled: true,
+      ...profileRow,
+      kidsEnabled: false,
       grandpaEnabled: false,
       premiumAccess: false,
-      childSafe: true,
+      childSafe: false,
     };
   }
 
   /* ================= LOAD PROFILE ================= */
+  async function loadProfile(userId?: string) {
+    if (!userId) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
 
-  async function loadProfile(userId: string) {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -108,19 +98,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!error && data) {
       setProfile(enhanceProfile(data));
+    } else {
+      setProfile(null);
     }
 
     setLoading(false);
   }
 
-  /* ================= AUTH ================= */
-
-  async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+  /* ================= INIT & AUTH STATE ================= */
+  useEffect(() => {
+    let profileChannel: any = null;
+    // initial session check
+    supabase.auth.getSession().then(({ data }) => {
+      const currentUser = data.session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) loadProfile(currentUser.id);
+      else setLoading(false);
     });
 
+    // auth state change listener
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        loadProfile(currentUser.id);
+
+        // subscribe to realtime changes for this user's profile
+        // cleanup previous channel if exists
+        if (profileChannel) {
+          try { profileChannel.unsubscribe(); } catch (e) {}
+        }
+
+        profileChannel = supabase
+          .channel(`public:profiles:id=eq.${currentUser.id}`)
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${currentUser.id}` },
+            (payload) => {
+              // payload.eventType can be 'INSERT' | 'UPDATE' | 'DELETE' depending on supabase client version
+              // new row is in payload.new (or payload.record / payload.new depending on SDK) — handle common shapes
+              const newRow = (payload as any).new ?? (payload as any).record ?? (payload as any).payload?.new;
+              if (newRow) {
+                setProfile(enhanceProfile(newRow as Profile));
+              } else {
+                // fallback: reload from server
+                loadProfile(currentUser.id);
+              }
+            }
+          )
+          .subscribe();
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      try {
+        listener.subscription.unsubscribe();
+      } catch (e) {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* ================= AUTH ACTIONS ================= */
+  async function signIn(email: string, password: string) {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }
 
@@ -130,14 +173,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     role: 'parent' | 'child' | 'senior'
   ) {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
     if (!data.user) throw new Error('Signup failed');
 
+    // create profile row
     await supabase.from('profiles').insert({
       id: data.user.id,
       email,
@@ -145,6 +185,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: role.toLowerCase(),
       family_id: crypto.randomUUID(),
     });
+
+    // immediately load profile
+    await loadProfile(data.user.id);
   }
 
   async function signOut() {
@@ -153,7 +196,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
   }
 
-  /* ================= PROVIDER ================= */
+  async function reloadProfile() {
+    if (user) await loadProfile(user.id);
+  }
 
   return (
     <AuthContext.Provider
@@ -164,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signIn,
         signUp,
         signOut,
+        reloadProfile,
       }}
     >
       {children}
