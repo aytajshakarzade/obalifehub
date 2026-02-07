@@ -33,9 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const session = supabase.auth.getSession();
-
-    session.then(({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
       if (data.session?.user) loadProfile(data.session.user.id);
       setLoading(false);
@@ -53,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return {
       ...row,
       kidsEnabled: role === 'child' || role === 'parent',
-      grandpaEnabled: role === 'parent' || role === 'senior',
+      grandpaEnabled: role === 'senior',
       childSafe: role === 'child',
     };
   }
